@@ -1,5 +1,7 @@
 # Crypto Library for EigenCC
-Modified from [ring](https://github.com/briansmith/ring).
+Modified from [ring](https://github.com/briansmith/ring).  
+
+SGX version: [rust-sgx-v1.1.2](https://github.com/ieigen/eigen-crypto/tree/rust-sgx-v1.1.2)
 
 ## Test
 ```
