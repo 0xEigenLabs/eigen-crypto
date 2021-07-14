@@ -1,0 +1,18 @@
+diff --git a/stream-ciphers/chacha/Cargo.toml b/stream-ciphers/chacha/Cargo.toml
+index c7a3365..d056fcb 100644
+--- a/stream-ciphers/chacha/Cargo.toml
++++ b/stream-ciphers/chacha/Cargo.toml
+@@ -12,10 +12,10 @@ readme = "README.md"
+ documentation = "https://docs.rs/c2-chacha"
+ 
+ [dependencies]
+-byteorder = { version = "1.3", git = "https://github.com/mesalock-linux/byteorder-sgx", optional = true }
++byteorder = { version = "1.3", git = "https://github.com/mesalock-linux/byteorder-sgx", optional = true, branch="v1.1.2-backup"}
+ #lazy_static = { version = "1.2", features = ["spin_no_std"], default-features = false, optional = true }
+-ppv-lite86 = { package = "ppv-lite86", git = "https://github.com/mesalock-linux/cryptocorrosion-sgx", version = "0.2.6", default-features = false }
+-stream-cipher = { version = "0.3", git = "https://github.com/mesalock-linux/rustcrypto-traits-sgx", optional = true }
++ppv-lite86 = { package = "ppv-lite86", git = "https://github.com/mesalock-linux/cryptocorrosion-sgx", branch = "v1.1.2-backup", default-features = false }
++stream-cipher = { version = "0.3", git = "https://github.com/mesalock-linux/rustcrypto-traits-sgx", optional = true, branch = "v1.1.2-backup"}
+ 
+ [dev-dependencies]
+ #hex-literal = "0.2"

@@ -1,0 +1,10 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 45ea029..cd57e64 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -27,4 +27,4 @@ sgx_rand = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.g
+ sgx_tstd = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+ 
+ [dependencies]
+-rustc-serialize = { git = "https://github.com/mesalock-linux/rustc-serialize-sgx" }
++rustc-serialize = { git = "https://github.com/mesalock-linux/rustc-serialize-sgx", branch="v1.1.2-backup"}
