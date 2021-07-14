@@ -4,8 +4,9 @@ Modified from [ring](https://github.com/briansmith/ring).
 ## Test
 ```
 git clone https://github.com/ieigen/eigen-crypto
-cd eigen-crypto
-cargo test -- --test-threads 1
+cd eigen-crypto/sgx-test
+cargo build
+./bin/run-tests
 ```
 
 ## TODO
