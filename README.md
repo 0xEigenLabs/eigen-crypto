@@ -5,8 +5,7 @@ Modified from [ring](https://github.com/briansmith/ring).
 ```
 git clone https://github.com/ieigen/eigen-crypto
 cd eigen-crypto
-export  LANGS=$PWD/hdwallet
-cargo test
+cargo test -- --test-threads 1
 ```
 
 ## TODO
@@ -16,4 +15,4 @@ cargo test
 * [x] ecies, supported but is not compatible with go-ecies due to different AES used.
 * [ ] schnorr and BLS multi-sig
 * [ ] bulletproofs
-* [ ] HD Wallet(BIP32)
+* [x] HD Wallet(BIP32)
