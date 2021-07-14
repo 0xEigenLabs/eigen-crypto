@@ -1,0 +1,51 @@
+[submodule "aho-croasick-sgx"]
+    path = third_party/aho-croasick-sgx
+    url = https://github.com/mesalock-linux/aho-corasick-sgx
+
+[submodule "cryptocorrosion-sgx"]
+    path = third_party/cryptocorrosion-sgx
+    url = https://github.com/mesalock-linux/cryptocorrosion-sgx
+
+[submodule "num-bigint-sgx"]
+    path = third_party/num-bigint-sgx
+    url = https://github.com/mesalock-linux/num-bigint-sgx
+
+[submodule "num-complex-sgx"]
+    path = third_party/num-complex-sgx
+    url = https://github.com/mesalock-linux/num-complex-sgx
+
+[submodule "num-integer-sgx"]
+    path = third_party/num-integer-sgx
+    url = https://github.com/mesalock-linux/num-integer-sgx
+
+[submodule "num-iter-sgx"]
+    path = third_party/num-iter-sgx
+    url = https://github.com/mesalock-linux/num-iter-sgx
+
+[submodule "num-rational-sgx"]
+    path = third_party/num-rational-sgx
+    url = https://github.com/mesalock-linux/num-rational-sgx
+
+[submodule "num-sgx"]
+    path = third_party/num-sgx
+    url = https://github.com/mesalock-linux/num-sgx
+
+[submodule "rand-sgx"]
+    path = third_party/rand-sgx
+    url = https://github.com/mesalock-linux/rand-sgx
+
+[submodule "regex-sgx"]
+    path = third_party/regex-sgx
+    url = https://github.com/mesalock-linux/regex-sgx
+
+[submodule "rust-base58-sgx"]
+    path = third_party/rust-base58-sgx
+    url = https://github.com/mesalock-linux/rust-base58-sgx
+
+[submodule "rust-crypto-sgx"]
+    path = third_party/rust-crypto-sgx
+    url = https://github.com/mesalock-linux/rust-crypto-sgx
+
+[submodule "serde-json-sgx"]
+    path = third_party/serde-json-sgx
+    url = https://github.com/mesalock-linux/serde-json-sgx

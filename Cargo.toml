@@ -7,7 +7,7 @@ edition = "2018"
 [features]
 #---- begin for sgx
 default = ["mesalock_sgx", "alloc"]
-mesalock_sgx = ["sgx_tstd"]
+mesalock_sgx = ["sgx_tstd", "sgx_libc"]
 #---- end
 #default = ["alloc"]
 #mesalock_sgx = []
@@ -19,20 +19,20 @@ sgx_tstd = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.g
 sgx_libc = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 ring = { git = "https://github.com/mesalock-linux/ring-sgx", branch="v1.1.2-backup"}
-rand = { path = "./vendor/rand-sgx" }
-num-bigint = { path = "./vendor/num-bigint-sgx" }
-rust-base58 =  {  path = "./vendor/rust-base58-sgx" }
-rust-crypto = { path = "./vendor/rust-crypto-sgx" }
-serde_json =  {  path = "./vendor/serde-json-sgx" }
+rand = { path = "./third_party/rand-sgx" }
+num-bigint = { path = "./third_party/num-bigint-sgx", features = ["serde"]}
+rust-base58 =  {  path = "./third_party/rust-base58-sgx" }
+rust-crypto = { path = "./third_party/rust-crypto-sgx" }
+serde_json =  {  path = "./third_party/serde-json-sgx" }
 serde_derive = { git = "https://github.com/mesalock-linux/serde-sgx", branch="v1.1.2-backup" }
 serde = { git = "https://github.com/mesalock-linux/serde-sgx", features = ["derive"], branch="v1.1.2-backup"}
 #rand_chacha
 lazy_static = { version = "1.2", features = ["spin_no_std"] }
 num-traits = { git = "https://github.com/mesalock-linux/num-traits-sgx", branch="v1.1.2-backup" }
-num-integer = {  path = "./vendor/num-integer-sgx" }
+num-integer = {  path = "./third_party/num-integer-sgx" }
 untrusted = { git = "https://github.com/briansmith/untrusted", tag = "ring-master" }
 bytes = { git = "https://github.com/mesalock-linux/bytes-sgx", branch="v1.1.2-backup" }
-regex = {  path = "./vendor/regex-sgx" }
+regex = {  path = "./third_party/regex-sgx" }
 #---- end
 
 #ring         = "0.16.9"
