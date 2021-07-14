@@ -149,7 +149,6 @@ mod tests {
 
         assert_eq!(private_key.is_ok(), true);
         let private_key = private_key.unwrap();
-        //let msg = "hello, bing!";
         let msg = base64::decode("3LpLPx65qASpJmeFB+bjFBV+W+z6NK8GcQl0E2knd7w=").unwrap();
         let sig = private_key.sign(&msg);
         assert_eq!(sig.is_ok(), true);
