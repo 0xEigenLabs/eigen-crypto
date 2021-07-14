@@ -1,3 +1,7 @@
+[submodule "aho-corasick-sgx"]
+    path = third_party/aho-corasick-sgx
+    url = https://github.com/mesalock-linux/aho-corasick-sgx
+
 [submodule "cryptocorrosion-sgx"]
     path = third_party/cryptocorrosion-sgx
     url = https://github.com/mesalock-linux/cryptocorrosion-sgx
