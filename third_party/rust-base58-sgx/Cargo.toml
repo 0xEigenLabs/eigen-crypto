@@ -1,0 +1,21 @@
+[package]
+name = "rust-base58"
+version = "0.0.4"
+authors = ["Nick Hamann <nick@wabbo.org>"]
+license = "MIT/Apache-2.0"
+homepage = "https://github.com/nham/rust-base58"
+repository = "https://github.com/nham/rust-base58"
+description = """
+Simple library for converting to and from base-58 strings.
+"""
+
+[dependencies]
+sgx_tstd = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+num = { path = "../num-sgx" }
+
+[dev-dependencies]
+#rand = "*"
+
+[features]
+default = ["mesalock_sgx"]
+mesalock_sgx = ["sgx_tstd"]

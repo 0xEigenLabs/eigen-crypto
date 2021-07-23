@@ -5,52 +5,81 @@ authors = ["stephen@ieigen.com"]
 edition = "2018"
 
 [features]
-#---- begin for sgx
-#default = ["mesalock_sgx", "alloc"]
-#mesalock_sgx = ["sgx_tstd"]
-#---- end
-default = ["alloc"]
-mesalock_sgx = []
+default = ["non_sgx", "alloc"]
+mesalock_sgx = [
+    "sgx_tstd",
+    "ring-sgx",
+    "rand-sgx",
+    "num-bigint-sgx",
+    "rust-base58-sgx",
+    "rust-crypto-sgx",
+    "serde_json-sgx",
+    "serde_derive-sgx",
+    "serde-sgx",
+    "lazy_static",
+    "num-traits-sgx",
+    "num-integer-sgx",
+    "untrusted-sgx",
+    "bytes-sgx",
+    "regex-sgx"
+]
+non_sgx = [
+    "ring",
+    "rand",
+    "num-bigint",
+    "rust-base58",
+    "rust-crypto",
+    "serde",
+    "serde_derive",
+    "serde_json",
+    "rand_chacha",
+    "lazy_static",
+    "num-traits",
+    "num-integer",
+    "untrusted",
+    "libc",
+    "bytes",
+    "regex"
+]
 alloc = []
 
 [dependencies]
 #---- begin for sgx
-#sgx_tstd = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["untrusted_fs"] }
+sgx_tstd = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["untrusted_fs"] }
 #sgx_libc = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-#
-#ring = { git = "https://github.com/mesalock-linux/ring-sgx", tag = "v0.16.5" }
-#rand = { git = "https://github.com/mesalock-linux/rand-sgx", tag = "v0.7.3_sgx1.1.2" }
-#num-bigint = { git = "https://github.com/mesalock-linux/num-bigint-sgx", features = ["serde"] }
-#rust-base58 = { git = "https://github.com/mesalock-linux/rust-base58-sgx" }
-#rust-crypto = { git = "https://github.com/mesalock-linux/rust-crypto-sgx" }
-#serde_json =  { git = "https://github.com/mesalock-linux/serde-json-sgx" }
-#serde_derive = { git = "https://github.com/mesalock-linux/serde-sgx" }
-#serde = { git = "https://github.com/mesalock-linux/serde-sgx", features = ["derive"] }
+ring-sgx = { git = "https://github.com/mesalock-linux/ring-sgx", package = 'ring', tag = "v0.16.5", optional = true}
+rand-sgx = { git = "https://github.com/mesalock-linux/rand-sgx", package = 'rand', tag = "v0.7.3_sgx1.1.2", optional = true }
+num-bigint-sgx = { git = "https://github.com/mesalock-linux/num-bigint-sgx", package = 'num-bigint', features = ["serde"], optional = true }
+rust-base58-sgx = { git = "https://github.com/mesalock-linux/rust-base58-sgx",package = 'rust-base58',  optional = true }
+rust-crypto-sgx = { git = "https://github.com/mesalock-linux/rust-crypto-sgx", package = 'rust-crypto',optional = true }
+serde_json-sgx =  { git = "https://github.com/mesalock-linux/serde-json-sgx", package = 'serde_json',optional = true }
+serde_derive-sgx = { git = "https://github.com/mesalock-linux/serde-sgx", package = 'serde_derive',optional = true }
+serde-sgx = { git = "https://github.com/mesalock-linux/serde-sgx", package = 'serde',features = ["derive"], optional = true }
 ##rand_chacha
-#lazy_static = { version = "1.2", features = ["spin_no_std"] }
-#num-traits = { git = "https://github.com/mesalock-linux/num-traits-sgx" }
-#num-integer = { git = "https://github.com/mesalock-linux/num-integer-sgx" }
-#untrusted = { git = "https://github.com/briansmith/untrusted", tag = "ring-master" }
-#bytes = { git = "https://github.com/mesalock-linux/bytes-sgx" }
-#regex = { git = "https://github.com/mesalock-linux/regex-sgx" }
+#lazy_static-sgx = { version = "1.2", package = 'lazy_static', features = ["spin_no_std"], optional = true }
+num-traits-sgx = { git = "https://github.com/mesalock-linux/num-traits-sgx", package = 'num-traits',optional = true }
+num-integer-sgx = { git = "https://github.com/mesalock-linux/num-integer-sgx", package = 'num-integer',optional = true }
+untrusted-sgx = { git = "https://github.com/briansmith/untrusted", package = 'untrusted', tag = "ring-master", optional = true }
+bytes-sgx = { git = "https://github.com/mesalock-linux/bytes-sgx", package = 'bytes', optional = true}
+regex-sgx = { git = "https://github.com/mesalock-linux/regex-sgx", package = 'regex', optional = true }
 #---- end
 
-ring         = "0.16.9"
-rand         = "0.7.2"
-num-bigint   =  { version = "0.2.3", features = ["serde"] }
-rust-base58 = "*"
-rust-crypto  = "0.2.36"
-serde        = {  version = "1.0.104", features = ["derive"]}
-serde_derive = "1.0.104"
-serde_json   = "1.0.40"
-rand_chacha  = "0.2.1"
-lazy_static  = "1.4.0"
-num-traits   = "0.2.10"
-num-integer  = "0.1.41"
-untrusted    = "0.7.0"
-libc         = "0.2.69"
-bytes        = { version = "0.4.12"} # unix app depends on 0.4.12, while sgx lib depends on 0.5.0
-regex        = "1"
+ring         = { version = "0.16.9", optional = true }
+rand         = { version = "0.7.2", optional = true }
+num-bigint   =  { version = "0.2.3", features = ["serde"], optional = true }
+rust-base58 = { version = "*", optional = true }
+rust-crypto  = { version = "0.2.36", optional = true }
+serde        = {  version = "1.0.104", features = ["derive"], optional = true}
+serde_derive = { version = "1.0.104", optional = true }
+serde_json   = { version = "1.0.40", optional = true }
+rand_chacha  = { version = "0.2.1", optional = true }
+lazy_static  = { version = "1.4.0", optional = true }
+num-traits   = { version = "0.2.10", optional = true }
+num-integer  = { version = "0.1.41", optional = true }
+untrusted    = { version = "0.7.0", optional = true }
+libc         = { version = "0.2.69", optional = true }
+bytes        = { version = "0.4.12", optional = true } # unix app depends on 0.4.12, while sgx lib depends on 0.5.0
+regex        = { version = "1", optional = true }
 
 [dev-dependencies]
 hex = "0.4.0"

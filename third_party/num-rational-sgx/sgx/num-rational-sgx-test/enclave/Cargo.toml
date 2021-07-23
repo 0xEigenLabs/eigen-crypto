@@ -1,0 +1,21 @@
+[package]
+name = "Helloworldsampleenclave"
+version = "1.0.0"
+authors = ["Baidu"]
+
+[lib]
+name = "helloworldsampleenclave"
+crate-type = ["staticlib"]
+
+[features]
+default = []
+
+[dependencies]
+num-rational = { path = "../../.." }
+num-traits = { git = "https://github.com/mesalock-linux/num-traits-sgx" }
+num-integer = { git = "https://github.com/mesalock-linux/num-integer-sgx" }
+
+[target.'cfg(not(target_env = "sgx"))'.dependencies]
+sgx_types = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tstd = { rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+sgx_tunittest = {rev = "v1.1.2", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
