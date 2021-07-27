@@ -1,14 +1,22 @@
 use std::prelude::v1::*;
-extern crate rust_base58;
 use serde_derive;
 use std::fmt;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[cfg(any(feature = "mesalock_sgx", target_env = "sgx"))]
+#[derive(serde_derive::Serialize, serde_derive::Deserialize)]
+#[serde(crate = "serde_sgx")]
+pub struct Error {
+    repr: Repr,
+}
+
+#[cfg(not(any(feature = "mesalock_sgx", target_env = "sgx")))]
 #[derive(serde_derive::Serialize, serde_derive::Deserialize)]
 pub struct Error {
     repr: Repr,
 }
+
 
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -16,6 +24,16 @@ impl fmt::Debug for Error {
     }
 }
 
+#[cfg(any(feature = "mesalock_sgx", target_env = "sgx"))]
+#[derive(serde_derive::Serialize, serde_derive::Deserialize)]
+#[serde(crate = "serde_sgx")]
+enum Repr {
+    Simple(ErrorKind),
+    #[serde(skip)]
+    Custom(Box<Custom>),
+}
+
+#[cfg(not(any(feature = "mesalock_sgx", target_env = "sgx")))]
 #[derive(serde_derive::Serialize, serde_derive::Deserialize)]
 enum Repr {
     Simple(ErrorKind),
@@ -29,6 +47,8 @@ struct Custom {
     error: Box<dyn std::error::Error + Send + Sync>,
 }
 
+#[cfg(any(feature = "mesalock_sgx", target_env = "sgx"))]
+#[serde(crate = "serde_sgx")]
 #[derive(
     serde_derive::Serialize,
     serde_derive::Deserialize,
@@ -41,7 +61,40 @@ struct Custom {
     PartialEq,
     PartialOrd,
 )]
+pub enum ErrorKind {
+    TooSmallNumOfkeysError = 1,
+    CurveParamNilError,
+    NotExactTheSameCurveInputError,
+    KeyParamNotMatchError,
+    ParseError,
+    InvalidAddressError,
+    InvalidPrivaiteKeyError,
+    CryptoError,
+    ErrInvalidRawEntropyLength,
+    ErrInvalidEntropyLength,
+    ErrStrengthNotSupported,
+    ErrLanguageNotSupported,
+    ErrMnemonicNumNotValid,
+    ErrMnemonicChecksumIncorrect,
+    ErrCryptographyNotSupported,
+    LimbUnspecifiedError,
+    InvalidBigNumError,
+    Unknown,
+}
 
+#[cfg(not(any(feature = "mesalock_sgx", target_env = "sgx")))]
+#[derive(
+    serde_derive::Serialize,
+    serde_derive::Deserialize,
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+)]
 pub enum ErrorKind {
     TooSmallNumOfkeysError = 1,
     CurveParamNilError,
@@ -138,12 +191,12 @@ impl From<u32> for Error {
     }
 }
 
-impl From<serde_json::Error> for Error {
-    #[inline]
-    fn from(err: serde_json::Error) -> Error {
-        Error::new(ErrorKind::ParseError, err)
-    }
-}
+//impl From<serde_json::Error> for Error {
+//    #[inline]
+//    fn from(err: serde_json::Error) -> Error {
+//        Error::new(ErrorKind::ParseError, err)
+//    }
+//}
 
 impl From<std::io::Error> for Error {
     #[inline]

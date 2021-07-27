@@ -1,4 +1,5 @@
 use std::prelude::v1::*;
+use std::convert::TryInto;
 use crate::arithmetic::montgomery::R;
 use crate::sign::ecdsa::EcdsaKeyPair;
 use crate::sign::ecdsa::KeyPair;
@@ -8,6 +9,7 @@ use crate::errors::Result;
 use crate::ring::aead::BoundKey;
 use bytes::{BufMut, BytesMut};
 use rand::Rng;
+use crate::ring::digest;
 
 const INITIAL_SALT: [u8; 20] = [
     0xc3, 0xee, 0xf7, 0x12, 0xc7, 0x2e, 0xbb, 0x5a, 0x11, 0xa7, 0xd2, 0x43, 0x2b, 0xb4, 0x63, 0x65,

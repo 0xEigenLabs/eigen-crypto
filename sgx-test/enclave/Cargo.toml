@@ -14,7 +14,7 @@ mesalock_sgx = ["sgx_tstd"]
 
 [dependencies]
 base64 = { git = "https://github.com/mesalock-linux/rust-base64-sgx", branch = "v1.1.2-backup"}
-eigen_crypto    = { path = "../../"}
+eigen_crypto    = { path = "../../", features = ['mesalock_sgx'] }
 rand            = { path = "../../third_party/rand-sgx" }
 untrusted = { git = "https://github.com/briansmith/untrusted", tag = "ring-master"  }
 #rand_core       = { git = "https://github.com/mesalock-linux/rand-sgx", tag = "v0.7.3_sgx1.1.2" }
