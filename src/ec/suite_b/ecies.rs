@@ -106,7 +106,6 @@ pub fn decrypt(sk: &EcdsaKeyPair, c: &[u8], s1: &[u8], s2: &[u8]) -> Result<Vec<
         return Err(Error::from(ErrorKind::CryptoError));
     }
 
-    println!("yes!");
     let m = aes_decrypt_less_safe(&k_e, cc)?;
     return Ok(m);
 }
@@ -132,7 +131,7 @@ fn message_tag(k_m: &[u8], c: &[u8], s2: &[u8]) -> Result<Vec<u8>> {
 }
 
 // we set IV equal to nonce, less safer compared to aes_encrypt
-fn aes_encrypt_less_safe(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
+pub fn aes_encrypt_less_safe(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
     let add = [0u8;0];
     let mut nonce = [0u8; 12];
     rand::thread_rng().fill(&mut nonce[..]);
@@ -153,7 +152,7 @@ fn aes_encrypt_less_safe(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
     Ok(result.to_vec())
 }
 
-fn aes_decrypt_less_safe(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
+pub fn aes_decrypt_less_safe(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
     let add = [0u8; 0];
     let nonce = &c[0..12];
     let tag = &c[12..28];
@@ -194,7 +193,6 @@ fn aes_decrypt(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
     in_out.put_slice(&c[ring::aead::NONCE_LEN..c.len()]);
 
     let aad = ring::aead::Aad::empty();
-    println!("here");
     let m = opening_key
         .open_in_place(aad, &mut in_out)
         .map_err(|_| Error::from(ErrorKind::CryptoError))?;
