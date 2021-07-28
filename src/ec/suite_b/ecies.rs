@@ -1,4 +1,5 @@
 use std::prelude::v1::*;
+use std::convert::TryInto;
 use crate::arithmetic::montgomery::R;
 use crate::sign::ecdsa::EcdsaKeyPair;
 use crate::sign::ecdsa::KeyPair;
@@ -6,8 +7,13 @@ use crate::sign::ecdsa::KeyPair;
 use crate::errors::*;
 use crate::errors::Result;
 use crate::ring::aead::BoundKey;
+use crate::ring::digest;
 use bytes::{BufMut, BytesMut};
 use rand::Rng;
+
+use crypto::aead::{AeadEncryptor, AeadDecryptor};
+use crypto::aes_gcm::AesGcm;
+use crypto::aes::KeySize;
 
 const INITIAL_SALT: [u8; 20] = [
     0xc3, 0xee, 0xf7, 0x12, 0xc7, 0x2e, 0xbb, 0x5a, 0x11, 0xa7, 0xd2, 0x43, 0x2b, 0xb4, 0x63, 0x65,
@@ -48,27 +54,15 @@ pub fn encrypt<B: AsRef<[u8]>>(
     )?;
     // P = r * K_b
     let P = private_key_ops.point_mul(&d, &K_b);
-    let actual_xy = super::private_key::affine_from_jacobian(private_key_ops, &P)?;
-    // ?? check P != 0
 
-    let mut secret = vec![];
-    let mut x_1_unencoded = actual_xy.0;
-    let x_1_len = x_1_unencoded.limbs.len() * 8;
-    let x_1_slice =
-        unsafe { std::slice::from_raw_parts(x_1_unencoded.limbs.as_mut_ptr() as *mut u8, x_1_len) };
+    let mut actual_result = vec![4u8; 1 + (2 * (common_ops.num_limbs * crate::limb::LIMB_BYTES))];
+    let (x, y) = actual_result[1..].split_at_mut(common_ops.num_limbs * crate::limb::LIMB_BYTES);
+    super::private_key::big_endian_affine_from_jacobian(private_key_ops, Some(x), Some(y), &P)?;
     // k_e, k_m = KDF(S || S_1)
-    secret.extend_from_slice(&x_1_slice);
-    secret.extend_from_slice(s1);
-    let salt = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, &INITIAL_SALT);
-    let initial_secret = salt.extract(&secret);
-    let mut secret = [0; 64];
+    let (k_e, k_m) = deriveKeys(&x, &s1)?;
 
-    hkdf_expand_label(&initial_secret, LABEL, &mut secret)?;
-
-    let (k_e, k_m) = secret.split_at(secret.len() / 2);
-
-    let c = aes_encrypt(k_e, msg)?;
-    let d = message_tag(k_m, &c, s2)?;
+    let c = aes_encrypt_less_safe(&k_e, msg)?;
+    let d = message_tag(&k_m, &c, s2)?;
 
     //R || c || d
     let mut res = vec![0u8; 65];
@@ -90,42 +84,43 @@ pub fn decrypt(sk: &EcdsaKeyPair, c: &[u8], s1: &[u8], s2: &[u8]) -> Result<Vec<
     let k_B = super::scalar_parse_big_endian_variable(
         common_ops,
         crate::limb::AllowZero::No,
+        // seed_as_bytes returns the real key !!!!!
         untrusted::Input::from(&sk.seed_as_bytes()),
     )?;
 
     let P = private_key_ops.point_mul(&k_B, &R);
-    let actual_xy = super::private_key::affine_from_jacobian(private_key_ops, &P)?;
 
-    let mut secret = vec![];
-    let mut x_1_unencoded = actual_xy.0;
-    let x_1_len = x_1_unencoded.limbs.len() * 8;
-    let x_1_slice =
-        unsafe { std::slice::from_raw_parts(x_1_unencoded.limbs.as_mut_ptr() as *mut u8, x_1_len) };
-    // S || S_1
-    secret.extend_from_slice(&x_1_slice);
-    secret.extend_from_slice(s1);
+
+    let mut actual_result = vec![4u8; 1 + (2 * (common_ops.num_limbs * crate::limb::LIMB_BYTES))];
+    let (x, y) = actual_result[1..].split_at_mut(common_ops.num_limbs * crate::limb::LIMB_BYTES);
+    super::private_key::big_endian_affine_from_jacobian(private_key_ops, Some(x), Some(y), &P)?;
 
     // k_e, k_m = KDF(S || S_1)
-    let salt = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, &INITIAL_SALT);
-    let initial_secret = salt.extract(&secret);
-    let mut secret = [0; 64];
-
-    hkdf_expand_label(&initial_secret, LABEL, &mut secret)?;
-
-    let (k_e, k_m) = secret.split_at(secret.len() / 2);
+    let (k_e, k_m) = deriveKeys(&x, &s1)?;
 
     let cc = &c[65..(c.len() - 32)];
-    let d = message_tag(k_m, cc, s2)?;
+    let d = message_tag(&k_m, cc, s2)?;
     let dd = &c[(c.len() - 32)..];
     // compare k_m and  d
     if d != dd {
-        println!("MAC is invalid, {:?} != {:?}", d, k_m);
         return Err(Error::from(ErrorKind::CryptoError));
     }
 
-    let m = aes_decrypt(k_e, cc)?;
+    println!("yes!");
+    let m = aes_decrypt_less_safe(&k_e, cc)?;
     return Ok(m);
 }
+
+//TODO: https://github.com/ethereum/go-ethereum/blob/master/crypto/ecies/ecies.go#L146
+fn deriveKeys(key: &[u8], s1: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+    let  mut concat_key = vec![];
+    concat_key.extend_from_slice(&key);
+    concat_key.extend_from_slice(&s1);
+    let secret = digest::digest(&digest::SHA512, &concat_key).as_ref().to_vec();
+    let (k_e, k_m) = secret.split_at(secret.len() / 2);
+    Ok((k_e.to_vec(), k_m.to_vec()))
+}
+
 
 fn message_tag(k_m: &[u8], c: &[u8], s2: &[u8]) -> Result<Vec<u8>> {
     let mut msg = vec![];
@@ -136,10 +131,46 @@ fn message_tag(k_m: &[u8], c: &[u8], s2: &[u8]) -> Result<Vec<u8>> {
     Ok(signature.as_ref().to_vec())
 }
 
+// we set IV equal to nonce, less safer compared to aes_encrypt
+fn aes_encrypt_less_safe(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
+    let add = [0u8;0];
+    let mut nonce = [0u8; 12];
+    rand::thread_rng().fill(&mut nonce[..]);
+    let mut cipher = AesGcm::new(KeySize::KeySize256,
+        key,  //32
+        &nonce,   //12
+        &add); //0
+    let mut output = vec![0u8; msg.len()];
+
+    let mut tag = [0u8; 16];
+
+    cipher.encrypt(msg, &mut output, &mut tag);
+
+    let mut result = BytesMut::with_capacity(output.len() + nonce.len() + tag.len());
+    result.put_slice(&nonce);
+    result.put_slice(&tag);
+    result.put_slice(&output);
+    Ok(result.to_vec())
+}
+
+fn aes_decrypt_less_safe(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
+    let add = [0u8; 0];
+    let nonce = &c[0..12];
+    let tag = &c[12..28];
+    let cipher = &c[28..];
+
+    let mut decipher = AesGcm::new(KeySize::KeySize256, key, nonce, &add);
+    let mut output = vec![0u8; cipher.len()];
+    decipher.decrypt(cipher, &mut output, tag);
+    Ok(output)
+}
+
 fn aes_encrypt(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
     let ubk = ring::aead::UnboundKey::new(&ring::aead::AES_256_GCM, key)
         .map_err(|_| Error::from(ErrorKind::CryptoError))?;
-    let nonce = RingAeadNonceSequence::new();
+    let mut r = [0u8; ring::aead::NONCE_LEN];
+    rand::thread_rng().fill(&mut r[..]);
+    let nonce = RingAeadNonceSequence::new(r);
     let mut sealing_key = ring::aead::SealingKey::new(ubk, nonce);
     let in_out_len = msg.len() + ring::aead::AES_256_GCM.tag_len();
     let mut in_out = BytesMut::with_capacity(in_out_len);
@@ -148,77 +179,50 @@ fn aes_encrypt(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
     sealing_key
         .seal_in_place_append_tag(aad, &mut in_out)
         .map_err(|_| Error::from(ErrorKind::CryptoError))?;
-    Ok((&in_out[..in_out_len]).to_vec())
+    let mut out = BytesMut::with_capacity(ring::aead::NONCE_LEN + in_out_len);
+    out.put_slice(nonce.as_ref());
+    out.put_slice(&in_out[..in_out_len]);
+    Ok(out.to_vec())
 }
 
 fn aes_decrypt(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
     let ubk = ring::aead::UnboundKey::new(&ring::aead::AES_256_GCM, key)
         .map_err(|_| Error::from(ErrorKind::CryptoError))?;
-    let nonce = RingAeadNonceSequence::new();
+    let nonce = RingAeadNonceSequence::new((c[..ring::aead::NONCE_LEN]).try_into().unwrap());
     let mut opening_key = ring::aead::OpeningKey::new(ubk, nonce);
-    let mut in_out = BytesMut::with_capacity(c.len());
-    in_out.put_slice(c);
+    let mut in_out = BytesMut::with_capacity(c.len() - ring::aead::NONCE_LEN);
+    in_out.put_slice(&c[ring::aead::NONCE_LEN..c.len()]);
 
     let aad = ring::aead::Aad::empty();
+    println!("here");
     let m = opening_key
         .open_in_place(aad, &mut in_out)
         .map_err(|_| Error::from(ErrorKind::CryptoError))?;
     Ok(m.to_vec())
 }
 
-fn hkdf_expand_label(prk: &ring::hkdf::Prk, label: &[u8], out: &mut [u8]) -> Result<()> {
-    const LABEL_PREFIX: &[u8] = b"ecies-eigen";
 
-    let out_len = (out.len() as u16).to_be_bytes();
-    let label_len = (LABEL_PREFIX.len() + label.len()) as u8;
-
-    let info = [&out_len, &[label_len][..], LABEL_PREFIX, label, &[0][..]];
-
-    prk.expand(&info, ArbitraryOutputLen(out.len()))
-        .map_err(|_| Error::from(ErrorKind::CryptoError))?
-        .fill(out)
-        .map_err(|_| Error::from(ErrorKind::CryptoError))?;
-
-    Ok(())
-}
-
-// The ring HKDF expand() API does not accept an arbitrary output length, so we
-// need to hide the `usize` length as part of a type that implements the trait
-// `ring::hkdf::KeyType` in order to trick ring into accepting it.
-struct ArbitraryOutputLen(usize);
-
-impl ring::hkdf::KeyType for ArbitraryOutputLen {
-    fn len(&self) -> usize {
-        self.0
+impl RingAeadNonceSequence {
+    fn new(n: [u8; ring::aead::NONCE_LEN]) -> RingAeadNonceSequence {
+        RingAeadNonceSequence {
+            nonce: n,
+        }
     }
 }
 
-impl RingAeadNonceSequence {
-    fn new() -> RingAeadNonceSequence {
-        RingAeadNonceSequence {
-            nonce: [0u8; ring::aead::NONCE_LEN],
-        }
+impl AsRef<[u8]> for RingAeadNonceSequence {
+    fn as_ref(&self) -> &[u8] {
+        &self.nonce
     }
 }
 
 impl ring::aead::NonceSequence for RingAeadNonceSequence {
     fn advance(&mut self) -> std::result::Result<ring::aead::Nonce, ring::error::Unspecified> {
-        let nonce = ring::aead::Nonce::assume_unique_for_key(self.nonce);
-        increase_nonce(&mut self.nonce);
-        Ok(nonce)
+        Ok(ring::aead::Nonce::assume_unique_for_key(self.nonce))
     }
 }
 
-pub fn increase_nonce(nonce: &mut [u8]) {
-    for i in nonce {
-        if std::u8::MAX == *i {
-            *i = 0;
-        } else {
-            *i += 1;
-            return;
-        }
-    }
-}
+#[derive(Copy, Clone)]
 pub struct RingAeadNonceSequence {
     nonce: [u8; ring::aead::NONCE_LEN],
 }
@@ -234,7 +238,7 @@ mod tests {
         let mut key = vec![0u8; 32];
         rand::thread_rng().fill(&mut key[..]);
 
-        let msg = "nihao, hello, world";
+        let msg = "Eigen, hello, world";
         let c = aes_encrypt(&key, msg.as_bytes());
         assert_eq!(c.is_ok(), true);
         let c = c.unwrap();
@@ -246,15 +250,23 @@ mod tests {
     }
 
     #[test]
-    fn test_ecies() {
-        /*
-        let d = "29079635126530934056640915735344231956621504557963207107451663058887647996601";
-        let seed_bytes = num_bigint::BigInt::from_str(&d).unwrap().to_bytes_be();
-        let alg = &crate::sign::ecdsa::ECDSA_P256_SHA256_ASN1_SIGNING;
-        let seed = untrusted::Input::from(&seed_bytes.1);
-        let private_key = crate::sign::ecdsa::EcdsaKeyPair::from_seed_unchecked(alg, seed);
-        */
+    fn test_aes_less_safe() {
+        let mut key = vec![0u8; 32];
+        rand::thread_rng().fill(&mut key[..]);
 
+        let msg = "Eigen, hello, world";
+        let c = aes_encrypt_less_safe(&key, msg.as_bytes());
+        assert_eq!(c.is_ok(), true);
+        let c = c.unwrap();
+
+        let p = aes_decrypt_less_safe(&key, &c);
+        assert_eq!(p.is_ok(), true);
+        let p = p.unwrap();
+        assert_eq!(p, msg.as_bytes().to_vec());
+    }
+
+    #[test]
+    fn test_ecies() {
         let mut r = vec![0u8; 32];
         rand::thread_rng().fill(&mut r[..]);
         let private_key = crate::sign::ecdsa::EcdsaKeyPair::from_seed_unchecked(
@@ -264,7 +276,8 @@ mod tests {
 
         assert_eq!(private_key.is_ok(), true);
         let private_key = private_key.unwrap();
-        let msg = "hello, come on, go get it 你好!";
+        println!("KeyPair {:?}", private_key);
+        let msg = "Hello, Eigen, Privacy Computing!";
         let s1 = vec![];
         let s2 = vec![];
 
@@ -274,6 +287,34 @@ mod tests {
         let cipher = encrypt(&public_key, &s1, &s2, msg.as_bytes());
         assert_eq!(cipher.is_ok(), true);
         let cipher = cipher.unwrap();
+        let plain = decrypt(&private_key, &cipher, &s1, &s2);
+
+        assert_eq!(plain.is_ok(), true);
+        assert_eq!(msg.as_bytes().to_vec(), (plain.unwrap()));
+    }
+
+    #[test]
+    fn test_ecies_with_js() {
+        let entropy = "29079635126530934056640915735344231956621504557963207107451663058887647996601";
+        let entropy_bytes = num_bigint::BigInt::from_str(&entropy).unwrap().to_bytes_be();
+        let alg = &crate::sign::ecdsa::ECDSA_P256_SHA256_ASN1_SIGNING;
+        let seed = untrusted::Input::from(&entropy_bytes.1);
+        let private_key = crate::sign::ecdsa::EcdsaKeyPair::from_seed_unchecked(alg, seed);
+
+        assert_eq!(private_key.is_ok(), true);
+        let private_key = private_key.unwrap();
+        println!("KeyPair {:?}", private_key);
+        let msg = "Hello, Eigen, Privacy Computing!";
+        let s1 = vec![];
+        let s2 = vec![];
+
+        let alg = &crate::sign::ecdsa::ECDSA_P256_SHA256_ASN1;
+        let public_key = crate::sign::ecdsa::UnparsedPublicKey::new(alg, private_key.public_key());
+
+        let cipher = encrypt(&public_key, &s1, &s2, msg.as_bytes());
+        assert_eq!(cipher.is_ok(), true);
+        let cipher = hex::decode(
+            "04de80176a235a70c45e3511f902527f3c6305ceda8942ef95af1e786552d8c250b44164e8bf79ff35c353a6c4772d1f5287011b8ffe9c02a725623798a57d7b78bde42d6375a0df5d025df51145317f7b1f27f4c8a66ea185f5518ae3258f8c5fc5d9f74fbd4a41b1a44c03040f6d8b7d6e2f01f3cd327626d22a073be5e8d9fd7651b3c26e416cf4d945bfeb6a0c62b5acd10413c3167d118d7f5b11").unwrap();
         let plain = decrypt(&private_key, &cipher, &s1, &s2);
 
         assert_eq!(plain.is_ok(), true);
