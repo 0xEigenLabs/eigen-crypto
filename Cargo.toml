@@ -46,8 +46,8 @@ ucrypto = [
 alloc = []
 
 [dependencies]
-sgx_tstd = { version = "1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["untrusted_fs"] }
-sgx_libc = { version = "1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+sgx_tstd = { rev = "v1.1.2", version = "1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["untrusted_fs"] }
+sgx_libc = { rev = "v1.1.2", version = "1.1.1", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 ring-sgx = { git = "https://github.com/mesalock-linux/ring-sgx", branch="v1.1.2-backup", optional = true, package = "ring", version = "0.16.9" }
 rand-sgx = { path = "./third_party/rand-sgx", optional = true, package = "rand", version = "0.7.2" }
@@ -58,8 +58,8 @@ serde-sgx = { git = "https://github.com/mesalock-linux/serde-sgx", features = ["
 serde_derive-sgx = { git = "https://github.com/mesalock-linux/serde-sgx", package = 'serde_derive', optional = true, branch = "v1.1.2-backup", version = "1.0.104" }
 num-traits-sgx = { git = "https://github.com/mesalock-linux/num-traits-sgx", branch = "v1.1.2-backup", optional = true, package = "num-traits", version = "0.2.10" }
 num-integer-sgx = {  path = "./third_party/num-integer-sgx", optional = true, package = "num-integer", version = "0.1.41" }
-untrusted-sgx = { git = "https://github.com/briansmith/untrusted", tag = "ring-master", optional = true, package = "untrusted", version = "0.7.0" }
-bytes-sgx = { git = "https://github.com/mesalock-linux/bytes-sgx", branch="v1.1.2-backup", optional = true, package = "bytes", version = "0.4.12" }
+untrusted-sgx = { git = "https://github.com/briansmith/untrusted", tag = "ring-master", optional = true, package = "untrusted", version = "0.6.2" }
+bytes-sgx = { git = "https://github.com/mesalock-linux/bytes-sgx", branch="v1.1.2-backup", optional = true, package = "bytes", version = "0.5.4" }
 regex-sgx = {  path = "./third_party/regex-sgx", optional = true, package = "regex", version = "1" }
 
 ring         = { version = "0.16.9", optional = true }
