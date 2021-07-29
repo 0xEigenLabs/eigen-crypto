@@ -1,4 +1,8 @@
 # Crypto Library for EigenCC
+## Requirement
+Rust Version: rustup default nightly-2020-10-25
+
+Rust SGX SDK: 1.1.3
 
 ## Test
 
