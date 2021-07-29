@@ -7,8 +7,8 @@ license = "Apache-2.0"
 description = "Crypto Library for EigenCC."
 
 [features]
-#default = ["ucrypto", "alloc"]
-default = ["mesalock_sgx"]
+default = ["ucrypto", "alloc"]
+#default = ["mesalock_sgx"]
 mesalock_sgx = [
     "sgx_tstd",
     "sgx_libc",

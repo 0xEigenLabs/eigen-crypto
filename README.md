@@ -10,7 +10,8 @@ Rust SGX SDK: 1.1.3
 git clone https://github.com/ieigen/eigen-crypto
 cd eigen-crypto
 # Non-SGX
-cargo test -- --test-threads 1
+cargo build --features=ucrypto,alloc
+cargo test -- --test-threads 1 --features=ucrypto,alloc
 
 # SGX
 cargo build --features=mesalock_sgx
