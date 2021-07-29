@@ -49,7 +49,7 @@ alloc = []
 sgx_tstd = { rev = "v1.1.3", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["untrusted_fs"] }
 sgx_libc = { rev = "v1.1.3", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
-ring-sgx = { git = "https://github.com/mesalock-linux/ring-sgx", optional = true, package = "ring" }
+ring-sgx = { git = "https://github.com/mesalock-linux/ring-sgx", optional = true, package = "ring", tag="v0.16.5" }
 rand-sgx = { git = "https://github.com/mesalock-linux/rand-sgx", optional = true, package = "rand" }
 num-bigint-sgx = { git = "https://github.com/mesalock-linux/num-bigint-sgx", features = ["serde"], optional = true, package = "num-bigint" }
 rust-base58-sgx =  {  git = "https://github.com/mesalock-linux/rust-base58-sgx", optional = true, package = "rust-base58" }

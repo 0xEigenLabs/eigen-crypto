@@ -562,7 +562,7 @@ checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 [[package]]
 name = "ring"
 version = "0.16.19"
-source = "git+https://github.com/mesalock-linux/ring-sgx#844efe271ed78a399d803b2579f5f2424d543c9f"
+source = "git+https://github.com/mesalock-linux/ring-sgx?tag=v0.16.5#844efe271ed78a399d803b2579f5f2424d543c9f"
 dependencies = [
  "cc",
  "sgx_tstd",
