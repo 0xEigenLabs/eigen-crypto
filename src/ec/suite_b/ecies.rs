@@ -1,19 +1,19 @@
-use std::prelude::v1::*;
-use std::convert::TryInto;
 use crate::arithmetic::montgomery::R;
 use crate::sign::ecdsa::EcdsaKeyPair;
 use crate::sign::ecdsa::KeyPair;
+use std::convert::TryInto;
+use std::prelude::v1::*;
 
-use crate::errors::*;
 use crate::errors::Result;
+use crate::errors::*;
 use crate::ring::aead::BoundKey;
 use crate::ring::digest;
 use bytes::{BufMut, BytesMut};
 use rand::Rng;
 
-use crypto::aead::{AeadEncryptor, AeadDecryptor};
-use crypto::aes_gcm::AesGcm;
+use crypto::aead::{AeadDecryptor, AeadEncryptor};
 use crypto::aes::KeySize;
+use crypto::aes_gcm::AesGcm;
 
 const INITIAL_SALT: [u8; 20] = [
     0xc3, 0xee, 0xf7, 0x12, 0xc7, 0x2e, 0xbb, 0x5a, 0x11, 0xa7, 0xd2, 0x43, 0x2b, 0xb4, 0x63, 0x65,
@@ -90,7 +90,6 @@ pub fn decrypt(sk: &EcdsaKeyPair, c: &[u8], s1: &[u8], s2: &[u8]) -> Result<Vec<
 
     let P = private_key_ops.point_mul(&k_B, &R);
 
-
     let mut actual_result = vec![4u8; 1 + (2 * (common_ops.num_limbs * crate::limb::LIMB_BYTES))];
     let (x, y) = actual_result[1..].split_at_mut(common_ops.num_limbs * crate::limb::LIMB_BYTES);
     super::private_key::big_endian_affine_from_jacobian(private_key_ops, Some(x), Some(y), &P)?;
@@ -112,14 +111,15 @@ pub fn decrypt(sk: &EcdsaKeyPair, c: &[u8], s1: &[u8], s2: &[u8]) -> Result<Vec<
 
 //TODO: https://github.com/ethereum/go-ethereum/blob/master/crypto/ecies/ecies.go#L146
 fn deriveKeys(key: &[u8], s1: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
-    let  mut concat_key = vec![];
+    let mut concat_key = vec![];
     concat_key.extend_from_slice(&key);
     concat_key.extend_from_slice(&s1);
-    let secret = digest::digest(&digest::SHA512, &concat_key).as_ref().to_vec();
+    let secret = digest::digest(&digest::SHA512, &concat_key)
+        .as_ref()
+        .to_vec();
     let (k_e, k_m) = secret.split_at(secret.len() / 2);
     Ok((k_e.to_vec(), k_m.to_vec()))
 }
-
 
 fn message_tag(k_m: &[u8], c: &[u8], s2: &[u8]) -> Result<Vec<u8>> {
     let mut msg = vec![];
@@ -132,13 +132,15 @@ fn message_tag(k_m: &[u8], c: &[u8], s2: &[u8]) -> Result<Vec<u8>> {
 
 // we set IV equal to nonce, less safer compared to aes_encrypt
 pub fn aes_encrypt_less_safe(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
-    let add = [0u8;0];
+    let add = [0u8; 0];
     let mut nonce = [0u8; 12];
     rand::thread_rng().fill(&mut nonce[..]);
-    let mut cipher = AesGcm::new(KeySize::KeySize256,
-        key,  //32
-        &nonce,   //12
-        &add); //0
+    let mut cipher = AesGcm::new(
+        KeySize::KeySize256,
+        key,    //32
+        &nonce, //12
+        &add,
+    ); //0
     let mut output = vec![0u8; msg.len()];
 
     let mut tag = [0u8; 16];
@@ -153,6 +155,12 @@ pub fn aes_encrypt_less_safe(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
 }
 
 pub fn aes_decrypt_less_safe(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
+    if c.len() <= 28 {
+        // TODO: the length (now 28) should be configurable
+        // Not enough long, obviously wrong
+        return Err(Error::from(ErrorKind::CryptoError));
+    }
+
     let add = [0u8; 0];
     let nonce = &c[0..12];
     let tag = &c[12..28];
@@ -199,12 +207,9 @@ fn aes_decrypt(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
     Ok(m.to_vec())
 }
 
-
 impl RingAeadNonceSequence {
     fn new(n: [u8; ring::aead::NONCE_LEN]) -> RingAeadNonceSequence {
-        RingAeadNonceSequence {
-            nonce: n,
-        }
+        RingAeadNonceSequence { nonce: n }
     }
 }
 
@@ -293,8 +298,11 @@ mod tests {
 
     #[test]
     fn test_ecies_with_js() {
-        let entropy = "29079635126530934056640915735344231956621504557963207107451663058887647996601";
-        let entropy_bytes = num_bigint::BigInt::from_str(&entropy).unwrap().to_bytes_be();
+        let entropy =
+            "29079635126530934056640915735344231956621504557963207107451663058887647996601";
+        let entropy_bytes = num_bigint::BigInt::from_str(&entropy)
+            .unwrap()
+            .to_bytes_be();
         let alg = &crate::sign::ecdsa::ECDSA_P256_SHA256_ASN1_SIGNING;
         let seed = untrusted::Input::from(&entropy_bytes.1);
         let private_key = crate::sign::ecdsa::EcdsaKeyPair::from_seed_unchecked(alg, seed);
