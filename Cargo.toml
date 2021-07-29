@@ -62,7 +62,7 @@ untrusted-sgx = { git = "https://github.com/briansmith/untrusted", tag = "ring-m
 bytes-sgx = { git = "https://github.com/mesalock-linux/bytes-sgx", optional = true, package = "bytes" }
 regex-sgx = {  git = "https://github.com/mesalock-linux/regex-sgx", optional = true, package = "regex" }
 
-ring         = { version = "0.16.19", optional = true }
+ring         = { version = "0.16.5", optional = true }
 rand         = { version = "0.7.2", optional = true }
 num-bigint   = { version = "0.2.3", features = ["serde"], optional = true }
 rust-base58  = { version = "0.0.4", optional = true }
