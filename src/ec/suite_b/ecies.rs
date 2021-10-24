@@ -193,8 +193,8 @@ fn aes_encrypt(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
 }
 
 fn aes_decrypt(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
-    let ubk = ring::aead::UnboundKey::new(&ring::aead::AES_256_GCM, key)
-        .map_err(|_| Error::from(ErrorKind::CryptoError))?;
+    let ubk = ring::aead::UnboundKey::new(&ring::aead::AES_256_GCM, key).unwrap();
+      //  .map_err(|_| Error::from(ErrorKind::CryptoError))?;
     let nonce = RingAeadNonceSequence::new((c[..ring::aead::NONCE_LEN]).try_into().unwrap());
     let mut opening_key = ring::aead::OpeningKey::new(ubk, nonce);
     let mut in_out = BytesMut::with_capacity(c.len() - ring::aead::NONCE_LEN);
@@ -203,7 +203,8 @@ fn aes_decrypt(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
     let aad = ring::aead::Aad::empty();
     let m = opening_key
         .open_in_place(aad, &mut in_out)
-        .map_err(|_| Error::from(ErrorKind::CryptoError))?;
+        .unwrap();
+        //.map_err(|_| Error::from(ErrorKind::CryptoError))?;
     Ok(m.to_vec())
 }
 
@@ -265,6 +266,18 @@ mod tests {
         let p = aes_decrypt_less_safe(&key, &c);
         assert_eq!(p.is_ok(), true);
         let p = p.unwrap();
+        assert_eq!(p, msg.as_bytes().to_vec());
+
+        let hexCipher = hex::decode("18cc968dff2f8a4fa87f2d964a3e0aacd359659722e52706f8d5d29d8c141025f897509177cdae93a905b0b6a7a4e9cd2f611e47a8eb68da839d96ca").unwrap();
+        let key = "01234567890123456789123456123456";
+        let p = aes_decrypt_less_safe(key.as_bytes(), &hexCipher);
+        println!("{:?}", p);
+
+        let msg = "Hello, Eigen, Privacy Computing!";
+        assert_eq!(p.is_ok(), true);
+        let p = p.unwrap();
+        println!("{:?}", p);
+        println!("{:?}", msg.as_bytes().to_vec());
         assert_eq!(p, msg.as_bytes().to_vec());
     }
 
