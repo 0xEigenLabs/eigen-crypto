@@ -193,8 +193,8 @@ fn aes_encrypt(key: &[u8], msg: &[u8]) -> Result<Vec<u8>> {
 }
 
 fn aes_decrypt(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
-    let ubk = ring::aead::UnboundKey::new(&ring::aead::AES_256_GCM, key).unwrap();
-      //  .map_err(|_| Error::from(ErrorKind::CryptoError))?;
+    let ubk = ring::aead::UnboundKey::new(&ring::aead::AES_256_GCM, key)
+        .map_err(|_| Error::from(ErrorKind::CryptoError))?;
     let nonce = RingAeadNonceSequence::new((c[..ring::aead::NONCE_LEN]).try_into().unwrap());
     let mut opening_key = ring::aead::OpeningKey::new(ubk, nonce);
     let mut in_out = BytesMut::with_capacity(c.len() - ring::aead::NONCE_LEN);
@@ -203,8 +203,7 @@ fn aes_decrypt(key: &[u8], c: &[u8]) -> Result<Vec<u8>> {
     let aad = ring::aead::Aad::empty();
     let m = opening_key
         .open_in_place(aad, &mut in_out)
-        .unwrap();
-        //.map_err(|_| Error::from(ErrorKind::CryptoError))?;
+        .map_err(|_| Error::from(ErrorKind::CryptoError))?;
     Ok(m.to_vec())
 }
 
