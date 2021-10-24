@@ -13,9 +13,11 @@ NOTE: This needs some tricks right now. you have to un-comment the deps and feat
 git clone https://github.com/ieigen/eigen-crypto
 cd eigen-crypto
 # Non-SGX
+git checkout non_sgx
 cargo test -- --test-threads 1
 
 # SGX
+git checkout merge
 cargo build --features=mesalock_sgx
 cd sgx-test
 make run
